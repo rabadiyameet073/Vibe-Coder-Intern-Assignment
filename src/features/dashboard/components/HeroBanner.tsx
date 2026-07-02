@@ -315,6 +315,7 @@ export const HeroBanner = memo(function HeroBanner() {
 
     // Wait one frame so the DOM has painted and clientWidth is real
     const initGL = () => {
+     try {
       const W = wrapper.clientWidth  || 460;
       const H = wrapper.clientHeight || 420;
 
@@ -342,7 +343,7 @@ export const HeroBanner = memo(function HeroBanner() {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(W, H);
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.5;
 
@@ -437,12 +438,12 @@ export const HeroBanner = memo(function HeroBanner() {
 
       // Animation loop
       let lastIdx = activeIdxRef.current;
-      const clock = new THREE.Clock();
+      const startTime = performance.now();
       let rafId: number;
 
       const animate = () => {
         rafId = requestAnimationFrame(animate);
-        const t   = clock.getElapsedTime();
+        const t   = (performance.now() - startTime) / 1000;
         const cur = activeIdxRef.current;
         const curPlatform = CAROUSEL_SLIDES[cur].platform;
         const nW2 = wrapper.clientWidth || 460;
@@ -518,6 +519,9 @@ export const HeroBanner = memo(function HeroBanner() {
         dispose(shadowPlane);
         renderer.dispose();
       };
+     } catch (e) {
+       console.warn('[HeroBanner] Three.js init failed:', e);
+     }
     };
 
     // Use rAF to ensure layout is done before reading clientWidth

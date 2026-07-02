@@ -42,6 +42,16 @@ export function Layout({ children }: LayoutProps) {
     setShowPreloader(false);
   }, []);
 
+  // Safety timeout: if preloader doesn't complete within 4s, force it
+  useEffect(() => {
+    if (!showPreloader) return;
+    const safety = setTimeout(() => {
+      sessionStorage.setItem("vibesearch-preloaded", "true");
+      setShowPreloader(false);
+    }, 4000);
+    return () => clearTimeout(safety);
+  }, [showPreloader]);
+
   // Prevent scrolling when preloader is active
   useEffect(() => {
     if (showPreloader) {
@@ -305,9 +315,9 @@ export function Layout({ children }: LayoutProps) {
       {/* Main Content */}
       <motion.main
         id="main-content"
-        initial={{ opacity: 0, y: 15 }}
-        animate={showPreloader ? { opacity: 0, y: 15 } : { opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.6 }}
+        initial={showPreloader ? { opacity: 0, y: 15 } : false}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: showPreloader ? 0.35 : 0, duration: 0.6 }}
         className="flex-1 max-w-6xl w-full mx-auto px-4 flex flex-col relative z-10"
         role="main"
       >
