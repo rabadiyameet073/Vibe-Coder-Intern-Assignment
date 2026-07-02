@@ -33,7 +33,7 @@ export function generateCampaignCSV(profiles: readonly CandidateProfile[]): stri
     headers.join(","),
     ...rows.map((row) =>
       row
-        .map((val) => `"${val.replace(/"/g, '""')}"`)
+        .map((val) => `"${(val ?? "").replace(/"/g, '""')}"`)
         .join(",")
     ),
   ].join("\n");

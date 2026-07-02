@@ -48,7 +48,6 @@ function findSummaryInSearchData(username: string): { summary: UserProfileSummar
  */
 function generateFallbackProfile(summary: UserProfileSummary, platform: Platform): ProfileDetailResponse {
   const followers = summary.followers || 100000;
-  const isVerified = summary.is_verified ?? false;
 
   // Generate historical growth data
   const stat_history = [
@@ -73,7 +72,7 @@ function generateFallbackProfile(summary: UserProfileSummary, platform: Platform
     .slice(0, 4)
     .map((a) => ({
       user_id: a.account.user_profile.user_id,
-      username: a.account.user_profile.username,
+      username: a.account.user_profile.username ?? "",
       picture: a.account.user_profile.picture,
       followers: a.account.user_profile.followers,
       fullname: a.account.user_profile.fullname,
@@ -85,22 +84,12 @@ function generateFallbackProfile(summary: UserProfileSummary, platform: Platform
 
   return {
     cached: true,
-    contact: {
-      showEmail: true,
-      showPhone: false,
-    },
     data: {
       success: true,
-      version: "2",
-      report_info: {
-        report_id: `fallback-${summary.user_id}`,
-        created: new Date().toISOString(),
-        profile_updated: new Date().toISOString(),
-      },
       user_profile: {
         ...summary,
         type: platform,
-        description: `Official ${platform} account of ${summary.fullname || summary.username}. Content creator, trendsetter, and digital influencer. For business inquiries, contact work@${summary.username.toLowerCase()}.com`,
+        description: `Official ${platform} account of ${summary.fullname || summary.username || "this creator"}. Content creator, trendsetter, and digital influencer. For business inquiries, contact work@${(summary.username ?? "contact").toLowerCase()}.com`,
         is_business: true,
         posts_count: platform === "youtube" ? 180 : 340,
         avg_likes: Math.floor(followers * 0.035),
@@ -121,8 +110,8 @@ function generateFallbackProfile(summary: UserProfileSummary, platform: Platform
         contacts: [
           {
             type: "email",
-            value: `work@${summary.username.toLowerCase()}.com`,
-            formatted_value: `work@${summary.username.toLowerCase()}.com`,
+            value: `work@${(summary.username ?? "contact").toLowerCase()}.com`,
+            formatted_value: `work@${(summary.username ?? "contact").toLowerCase()}.com`,
           },
         ],
         relevant_tags: [

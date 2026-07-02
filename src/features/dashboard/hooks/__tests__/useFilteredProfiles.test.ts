@@ -22,7 +22,7 @@ vi.mock("@/services/searchService", () => ({
   filterProfiles: vi.fn((profiles: UserProfileSummary[], query) => {
     if (!query) return profiles;
     return profiles.filter((p) =>
-      p.username.toLowerCase().includes(query.toLowerCase()) ||
+      (p.username ?? "").toLowerCase().includes(query.toLowerCase()) ||
       p.fullname.toLowerCase().includes(query.toLowerCase())
     );
   }),

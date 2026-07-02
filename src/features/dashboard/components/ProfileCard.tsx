@@ -96,8 +96,8 @@ export const ProfileCard = memo(function ProfileCard({
   const { addProfile, removeProfile } = useSelectionActions();
 
   const handleClick = useCallback(() => {
-    onProfileClick?.(profile.username);
-    navigate(`/profile/${profile.username}?platform=${platform}`);
+    onProfileClick?.(profile.username ?? "");
+    navigate(`/profile/${profile.username ?? profile.user_id}?platform=${platform}`);
   }, [navigate, profile.username, platform, onProfileClick]);
 
   const handleListToggle = useCallback(
@@ -121,7 +121,7 @@ export const ProfileCard = memo(function ProfileCard({
 
   const handleImageError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
-      e.currentTarget.src = FALLBACK_AVATAR(profile.username);
+      e.currentTarget.src = FALLBACK_AVATAR(profile.username ?? "");
     },
     [profile.username]
   );

@@ -104,9 +104,9 @@ export const ProfileHeader = memo(function ProfileHeader({
 }: ProfileHeaderProps & { onBackClick?: () => void }) {
   const isAdded = useIsProfileSelected(user.user_id);
   const { addProfile, removeProfile } = useSelectionActions();
-  const viewsCount = useSelectionStore((s) => s.profileViews[user.username] ?? 0);
+  const viewsCount = useSelectionStore((s) => s.profileViews[user.username ?? ""] ?? 0);
   const config = PLATFORM_CONFIG[platform];
-  const bannerImage = getBannerImage(user.username, user.fullname);
+  const bannerImage = getBannerImage(user.username ?? "", user.fullname);
 
   const handleToggle = useCallback(() => {
     if (isAdded) {
@@ -182,7 +182,7 @@ export const ProfileHeader = memo(function ProfileHeader({
               alt={user.fullname}
               className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-1.5 border-border-custom shadow-hard-sm object-cover shrink-0 bg-card-hover"
               onError={(e) => {
-                e.currentTarget.src = FALLBACK_AVATAR(user.username);
+                e.currentTarget.src = FALLBACK_AVATAR(user.username ?? "");
               }}
             />
             <div className="absolute -bottom-1 -right-1 bg-card p-1 rounded-full border border-border-custom">
