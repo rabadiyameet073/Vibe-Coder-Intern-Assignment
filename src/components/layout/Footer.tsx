@@ -34,30 +34,51 @@ const LEGAL_LINKS = [
 ];
 
 const IconInstagram = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
     <circle cx="12" cy="12" r="4" />
-    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    <circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none" />
   </svg>
 );
 
 const IconYoutube = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="white">
     <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
-    <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
+    <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="black" />
   </svg>
 );
 
 const IconTikTok = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="white">
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.3a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.82a8.18 8.18 0 0 0 4.77 1.52V6.9a4.85 4.85 0 0 1-1-.21z" />
   </svg>
 );
 
 const SOCIAL_LINKS = [
-  { label: "Instagram", href: "https://instagram.com", icon: IconInstagram, color: "#e11d48", hoverColor: "#fb7185" },
-  { label: "YouTube",   href: "https://youtube.com",  icon: IconYoutube,   color: "#e53e3e", hoverColor: "#f87171" },
-  { label: "TikTok",    href: "https://tiktok.com",   icon: IconTikTok,    color: "#1a1b1f", hoverColor: "#6b6b6b" },
+  {
+    label: "Instagram",
+    href: "https://instagram.com",
+    icon: IconInstagram,
+    hoverBg: "#d62976",
+    glow: "rgba(214,41,118,0.55)",
+    gradient: "linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)",
+  },
+  {
+    label: "YouTube",
+    href: "https://youtube.com",
+    icon: IconYoutube,
+    hoverBg: "#ff0000",
+    glow: "rgba(255,0,0,0.5)",
+    gradient: "linear-gradient(135deg,#ff0000,#cc0000)",
+  },
+  {
+    label: "TikTok",
+    href: "https://tiktok.com",
+    icon: IconTikTok,
+    hoverBg: "#010101",
+    glow: "rgba(105,201,208,0.55)",
+    gradient: "linear-gradient(135deg,#010101,#69c9d0,#ee1d52,#010101)",
+  },
 ];
 
 const MARQUEE_ITEMS = [
@@ -276,13 +297,163 @@ function StatCounter({ value, label, suffix = "" }: { value: number; label: stri
   );
 }
 
+// ─── Premium Social Button ────────────────────────────────────────────────────
+// Features:
+//  • Staggered mount slide-up via motion `custom` + `variants`
+//  • Liquid fill: a pseudo-layer scales from 0→1 on hover (clipPath circle expand)
+//  • Icon slide-in-top on hover entry, slide-out-bottom on leave
+//  • Glowing ring that pulses on hover
+//  • Click ripple burst (3 expanding rings)
+//  • Tooltip label above on hover
+//  • Magnetic cursor micro-pull
+
+interface SocialBtnProps {
+  social: typeof SOCIAL_LINKS[number];
+  index: number;
+}
+
+const rippleVariants = {
+  initial: { scale: 0, opacity: 0.6 },
+  animate: { scale: 3.5, opacity: 0, transition: { duration: 0.55, ease: [0, 0, 0.2, 1] as const } },
+};
+
+function SocialButton({ social, index }: SocialBtnProps) {
+  const [hovered, setHovered] = useState(false);
+  const [ripples, setRipples] = useState<number[]>([]);
+  const btnRef = useRef<HTMLAnchorElement>(null);
+  const Icon = social.icon;
+
+  // Magnetic pull
+  const onMove = useCallback((e: React.MouseEvent) => {
+    const el = btnRef.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) * 0.22;
+    const dy = (e.clientY - (r.top  + r.height / 2)) * 0.22;
+    el.style.transform = `translate(${dx}px,${dy}px)`;
+  }, []);
+
+  const onLeave = useCallback(() => {
+    if (btnRef.current) btnRef.current.style.transform = "translate(0,0)";
+    setHovered(false);
+  }, []);
+
+  const fireRipple = () => {
+    const id = Date.now();
+    setRipples((r) => [...r, id]);
+    setTimeout(() => setRipples((r) => r.filter((x) => x !== id)), 600);
+  };
+
+  return (
+    <motion.div
+      className="relative"
+      initial={{ y: 30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.55, delay: 0.12 * index, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {/* Tooltip */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.span
+            key="tip"
+            initial={{ opacity: 0, y: 6, scale: 0.88 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.88 }}
+            transition={{ duration: 0.18 }}
+            className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold font-mono uppercase tracking-widest text-white px-2.5 py-1 rounded-md pointer-events-none z-20"
+            style={{ background: social.hoverBg, boxShadow: `0 2px 12px ${social.glow}` }}
+          >
+            {social.label}
+            {/* arrow */}
+            <span className="absolute left-1/2 -translate-x-1/2 -bottom-[5px] w-0 h-0"
+              style={{ borderLeft:"5px solid transparent", borderRight:"5px solid transparent", borderTop:`5px solid ${social.hoverBg}` }} />
+          </motion.span>
+        )}
+      </AnimatePresence>
+
+      <motion.a
+        ref={btnRef}
+        href={social.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={social.label}
+        onMouseEnter={() => setHovered(true)}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
+        onClick={fireRipple}
+        whileTap={{ scale: 0.88 }}
+        className="relative w-[52px] h-[52px] flex items-center justify-center overflow-hidden cursor-pointer select-none"
+        style={{
+          backgroundColor: "rgb(44,44,44)",
+          transition: "transform 0.25s cubic-bezier(.16,1,.3,1)",
+          // glowing border ring
+          boxShadow: hovered
+            ? `0 0 0 2px ${social.hoverBg}, 0 0 22px 4px ${social.glow}, 0 8px 24px rgba(0,0,0,0.35)`
+            : "0 2px 8px rgba(0,0,0,0.3)",
+        }}
+      >
+        {/* Liquid fill layer — scales up as a circle from centre */}
+        <motion.span
+          className="absolute inset-0 rounded-none pointer-events-none"
+          initial={false}
+          animate={hovered
+            ? { clipPath: "circle(120% at 50% 50%)", opacity: 1 }
+            : { clipPath: "circle(0% at 50% 50%)", opacity: 1 }
+          }
+          transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+          style={{ background: social.gradient }}
+        />
+
+        {/* Pulsing glow ring behind icon */}
+        <AnimatePresence>
+          {hovered && (
+            <motion.span
+              key="ring"
+              className="absolute inset-0 pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.45, 0], scale: [0.7, 1.35, 1.35] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              style={{ borderRadius: 0, background: `radial-gradient(circle, ${social.glow} 0%, transparent 70%)` }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Ripple bursts on click */}
+        {ripples.map((id) => (
+          <motion.span
+            key={id}
+            className="absolute inset-0 pointer-events-none"
+            variants={rippleVariants}
+            initial="initial"
+            animate="animate"
+            style={{ borderRadius: "50%", border: `2px solid ${social.hoverBg}`, margin: "auto", width: "52px", height: "52px" }}
+          />
+        ))}
+
+        {/* Icon — slide-in-top on hover, slide-out-bottom on leave */}
+        <AnimatePresence mode="popLayout">
+          <motion.span
+            key={hovered ? "hover-icon" : "idle-icon"}
+            initial={{ y: hovered ? -28 : 28, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: hovered ? 28 : -28, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 flex items-center justify-center text-white"
+          >
+            <Icon />
+          </motion.span>
+        </AnimatePresence>
+      </motion.a>
+    </motion.div>
+  );
+}
+
 // ─── Main Footer ──────────────────────────────────────────────────────────────
 export function Footer() {
   const footerRef = useRef<HTMLElement>(null);
   const [isDark, setIsDark] = useState(false);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-  const [hoveredSocial, setHoveredSocial] = useState<string | null>(null);
 
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.classList.contains("dark"));
@@ -415,26 +586,11 @@ export function Footer() {
               <p className="text-sm leading-relaxed text-[var(--text-muted)] max-w-xs mb-6">
                 AI-powered influencer discovery platform. Find creators who truly match your brand's vibe.
               </p>
+              {/* Premium social icon buttons */}
               <div className="flex items-center gap-3">
-                {SOCIAL_LINKS.map((social) => {
-                  const Icon = social.icon;
-                  const isHov = hoveredSocial === social.label;
-                  return (
-                    <motion.a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer"
-                      aria-label={social.label}
-                      onHoverStart={() => setHoveredSocial(social.label)}
-                      onHoverEnd={() => setHoveredSocial(null)}
-                      whileHover={{ y: -4, scale: 1.12 }} whileTap={{ scale: 0.9 }}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg border-1.5 border-[var(--border-color)] bg-[var(--bg-app)] transition-all duration-200"
-                      style={{
-                        color: isHov ? social.hoverColor : "var(--text-muted)",
-                        borderColor: isHov ? social.hoverColor : undefined,
-                        boxShadow: isHov ? `0 4px 0 0 ${social.hoverColor}` : "0 2px 0 0 var(--border-color)",
-                      }}>
-                      <Icon />
-                    </motion.a>
-                  );
-                })}
+                {SOCIAL_LINKS.map((social, i) => (
+                  <SocialButton key={social.label} social={social} index={i} />
+                ))}
               </div>
             </GarageDoor>
 
